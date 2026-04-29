@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Arcade</title>
+<meta name="description" content="A soft, pretty, modern aesthetic arcade game" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #fff;
+    color: hsl(260, 40%, 13%);
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  .bungee { font-family: 'Bungee', cursive; }
+  .hidden { display: none !important; }
+
+  .y2k-lavender-bg {
+    background-color: #f0d6ff;
+    background-image: radial-gradient(circle, #d8b4fe33 1px, transparent 1px);
+    background-size: 20px 20px;
+    min-height: 100vh;
+  }
+  .y2k-vivid-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border-radius: 22px;
+    padding: 20px;
+    text-align: left;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .y2k-vivid-card:hover { transform: translateY(-4px); }
+  .y2k-vivid-card:active { transform: translateY(2px); }
+
+  .y2k-new-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-family: 'Bungee', cursive;
+    font-size: 9px;
+    color: #fff;
+    background: #ff0098;
+    padding: 3px 8px;
+    border-radius: 8px;
+    animation: y2k-badge-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes y2k-badge-pulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .y2k-btn {
+    font-family: 'Bungee', cursive;
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 14px;
+    transition: transform 0.15s ease;
+  }
+  .y2k-btn:hover { transform: translateY(-4px); }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    10%,30%,50%,70%,90% { transform: translateX(-5px); }
+    20%,40%,60%,80% { transform: translateX(5px); }
+  }
+  .animate-shake { animation: shake 0.5s ease-in-out; }
+  @keyframes attack-forward { 0%,100% { transform: translateX(0);} 50% { transform: translateX(50px) scale(1.1);} }
+  @keyframes attack-backward { 0%,100% { transform: translateX(0);} 50% { transform: translateX(-50px) scale(1.1);} }
+  .animate-attack-forward { animation: attack-forward 0.5s ease-in-out; }
+  .animate-attack-backward { animation: attack-backward 0.5s ease-in-out; }
+  @keyframes damage-float { 0% { opacity:1; transform: translateY(0) scale(1);} 100% { opacity:0; transform: translateY(-50px) scale(1.5);} }
+  .animate-damage-float { animation: damage-float 1s ease-out forwards; }
+
+  /* Hub */
+  .hub { display: flex; flex-direction: column; align-items: center; }
+  .hub-header { width: 100%; max-width: 768px; margin: 0 auto; padding: 56px 24px 24px; text-align: center; }
+  .hub-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.45em; margin-bottom: 16px; font-weight: 600; color: #9b7abf; }
+  .hub-title { line-height: 1.1; font-family: 'Bungee', cursive; font-size: 48px; }
+  @media (min-width: 768px) { .hub-title { font-size: 72px; } }
+  .hub-divider { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; }
+  .hub-divider .line { height: 2px; width: 40px; background: rgba(255,0,152,0.3); }
+  .hub-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding: 24px; max-width: 768px; width: 100%; }
+  @media (min-width: 768px) { .hub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .icon-box { margin-bottom: 12px; padding: 8px; border-radius: 12px; background: rgba(255,255,255,0.4); backdrop-filter: blur(4px); display: inline-flex; }
+  .card-name { font-family: 'Bungee', cursive; color: #1a1040; font-size: 18px; line-height: 1.1; margin-bottom: 4px; }
+  @media (min-width: 768px) { .card-name { font-size: 20px; } }
+  .card-sub { font-size: 9px; text-transform: uppercase; letter-spacing: 0.25em; font-weight: 600; color: #1a1040; opacity: 0.5; }
+  .footer { margin-top: auto; padding-bottom: 24px; text-align: center; }
+  .footer p { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: #9b7abf; padding-top: 32px; }
+
+  /* Game shell */
+  .game-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 16px; }
+  .game-card { position: relative; border-radius: 22px; padding: 24px; background: #fff; max-width: 768px; width: 100%; }
+  .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 8px; flex-wrap: wrap; }
+  .game-header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .game-title { font-family: 'Bungee', cursive; color: #1a1040; font-size: 20px; }
+  .badge { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; color: #1a1040; }
+  .close-btn { padding: 8px; border-radius: 9999px; }
+  .close-btn:hover { background: rgba(0,0,0,0.05); }
+  .help-text { text-align: center; font-size: 12px; color: #9b7abf; margin-top: 12px; }
+
+  /* Difficulty selector */
+  .diff-card { border-radius: 22px; padding: 32px; max-width: 512px; width: 100%; background: #fff; box-shadow: 0 6px 0 0 #d8b4fe; }
+  .diff-title { font-family: 'Bungee', cursive; color: #ff0098; font-size: 30px; text-align: center; margin-bottom: 8px; }
+  .diff-sub { text-align: center; font-size: 14px; color: #9b7abf; margin-bottom: 24px; }
+  .diff-btn { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border-radius: 16px; padding: 16px; transition: transform 0.15s; color: #1a1040; margin-bottom: 16px; }
+  .diff-btn:hover { transform: translateY(-4px); }
+  .diff-btn .ico { padding: 8px; border-radius: 12px; background: rgba(255,255,255,0.4); }
+  .diff-btn .lbl { font-family: 'Bungee', cursive; font-size: 18px; }
+  .diff-btn .desc { font-size: 12px; opacity: 0.7; }
+  .back-btn { width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; font-size: 14px; color: #9b7abf; }
+  .back-btn:hover { opacity: 0.7; }
+
+  /* Game over modal */
+  .modal-bg { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); padding: 16px; }
+  .modal { border-radius: 22px; padding: 32px; text-align: center; background: #fff; max-width: 420px; }
+  .modal h3 { font-family: 'Bungee', cursive; font-size: 30px; margin-bottom: 8px; }
+  .modal p { color: #1a1040; font-size: 18px; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 12px; justify-content: center; }
+
+  /* Snake */
+  .snake-board { position: relative; border-radius: 16px; overflow: hidden; background: #c8e6c9; border: 3px solid #69f0ae; margin: 0 auto; }
+
+  /* Match3 / Gem */
+  .tile-grid { display: grid; gap: 4px; margin: 0 auto; padding: 8px; border-radius: 16px; }
+  .tile { display: flex; align-items: center; justify-content: center; border-radius: 10px; transition: all 0.2s; user-select: none; cursor: pointer; }
+  .tile-symbol { font-size: 22px; color: #1a1040; font-weight: bold; opacity: 0.7; }
+
+  /* Wordle */
+  .wordle-board { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .wordle-row { display: flex; gap: 8px; justify-content: center; }
+  .wordle-tile { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 24px; font-family: 'Bungee', cursive; transition: all 0.2s; }
+  .wordle-keyboard { display: flex; flex-direction: column; gap: 6px; }
+  .wordle-keyrow { display: flex; gap: 4px; justify-content: center; }
+  .wordle-key { padding: 12px 10px; border-radius: 8px; font-family: 'Bungee', cursive; font-size: 12px; min-width: 32px; transition: transform 0.15s; }
+  .wordle-key.wide { min-width: 52px; font-size: 9px; }
+  .wordle-key:hover { transform: translateY(-2px); }
+
+  /* Memory */
+  .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .memory-card { aspect-ratio: 1; border-radius: 14px; transition: all 0.3s; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+
+  /* Battle */
+  .battle-card { max-width: 900px; }
+  .combatants { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 24px; }
+  .combatant { flex: 1; text-align: center; }
+  .combatant-circle { position: relative; display: inline-block; }
+  .combatant-face { width: 112px; height: 112px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 48px; transition: all 0.3s; }
+  .vs-text { font-family: 'Bungee', cursive; color: #ff0098; font-size: 30px; }
+  .hp-bar-wrap { margin-top: 12px; max-width: 200px; margin-left: auto; margin-right: auto; }
+  .hp-labels { display: flex; justify-content: space-between; font-size: 12px; font-family: 'Bungee', cursive; color: #1a1040; margin-bottom: 4px; }
+  .hp-bar { height: 20px; border-radius: 9999px; overflow: hidden; background: #eee; border: 2px solid #ddd; }
+  .hp-fill { height: 100%; transition: all 0.5s; }
+  .battle-message { border-radius: 14px; padding: 12px; margin-bottom: 16px; text-align: center; min-height: 56px; display: flex; align-items: center; justify-content: center; background: #f0d6ff; border: 2px solid #d8b4fe; font-size: 14px; font-weight: 600; }
+  .battle-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .battle-action { display: flex; flex-direction: column; align-items: center; gap: 4px; border-radius: 14px; padding: 12px; transition: transform 0.15s; color: #1a1040; }
+  .battle-action:hover:not(:disabled) { transform: translateY(-4px); }
+  .battle-action:disabled { opacity: 0.4; cursor: not-allowed; }
+  .battle-action .lbl { font-family: 'Bungee', cursive; font-size: 12px; }
+  .battle-action .desc { font-size: 10px; opacity: 0.6; }
+  .battle-log { border-radius: 12px; padding: 12px; max-height: 96px; overflow-y: auto; background: #fafafa; border: 2px solid #eee; }
+  .battle-log h4 { font-family: 'Bungee', cursive; color: #9b7abf; font-size: 12px; margin-bottom: 4px; }
+  .battle-log p { font-size: 11px; color: #666; margin-bottom: 2px; }
+  .turn-indicator { text-align: center; font-size: 14px; margin-bottom: 12px; font-family: 'Bungee', cursive; }
+
+  /* Simple icons (SVG inline via CSS) */
+  .icon { display: inline-block; width: 22px; height: 22px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================================
+   My Arcade — Single-file vanilla JS version
+   Edit anything below in VS Code. No build step required.
+   ========================================================================= */
+
+const app = document.getElementById('app');
+
+/* ---------- Tiny SVG icon helpers ---------- */
+const SVG = (path, size=22, color='currentColor') =>
+  `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+const ICONS = {
+  sparkles: () => SVG('<path d="M12 3l1.9 5.8L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-2.2z"/><path d="M5 3v4M3 5h4M19 17v4M17 19h4"/>'),
+  grid: () => SVG('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>'),
+  book: () => SVG('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'),
+  layers: () => SVG('<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'),
+  diamond: () => SVG('<rect x="3" y="3" width="18" height="18" rx="2" transform="rotate(45 12 12)"/>'),
+  swords: () => SVG('<polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/>'),
+  star: (s=14,c='#ff0098') => SVG(`<polygon points="12 2 15.1 8.6 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 8.9 8.6 12 2" fill="${c}"/>`,s,c),
+  x: () => SVG('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',20),
+  arrow_left: () => SVG('<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',16),
+  trophy: () => SVG('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',24),
+  target: () => SVG('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',24),
+  flame: () => SVG('<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',24),
+  sword: () => SVG('<polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/>',20),
+  shield: (s=20,c='currentColor') => SVG('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',s,c),
+  star20: () => SVG('<polygon points="12 2 15.1 8.6 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 8.9 8.6 12 2"/>',20),
+  zap: () => SVG('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',20),
+  leaf: (s=24) => SVG('<path d="M11 20A7 7 0 0 1 4 13c0-1.93.5-3.5 2-5 1.5-1.5 5-3 9-3 0 4-1.5 7.5-3 9-1.5 1.5-3.07 2-5 2"/><path d="M2 22 L12 12"/>',s),
+  droplet: (s=24) => SVG('<path d="M12 2.69 5.64 9.05a8 8 0 1 0 12.72 0L12 2.69z"/>',s),
+  flower: () => SVG('<circle cx="12" cy="12" r="3"/><circle cx="12" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><circle cx="5" cy="12" r="3"/><circle cx="19" cy="12" r="3"/>'),
+  heart: () => SVG('<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>'),
+  moon: () => SVG('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
+  sun: () => SVG('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>'),
+  gem: () => SVG('<polygon points="6 3 18 3 22 9 12 22 2 9"/>'),
+};
+
+/* =========================================================================
+   ROUTER — switch between hub and a game
+   ========================================================================= */
+let currentView = null;
+function render(view) {
+  currentView = view;
+  app.innerHTML = '';
+  view();
+}
+function closeGame() { render(Hub); }
+
+/* =========================================================================
+   HUB
+   ========================================================================= */
+const GAMES = [
+  { id: 'snake',  name: 'Snake',     subtitle: 'Secret Garden',   icon: ICONS.sparkles(), color: '#ff6fcf', shadow: '#cc4fa3' },
+  { id: 'match3', name: 'Tile Match',subtitle: 'Moroccan Court',  icon: ICONS.grid(),     color: '#fff176', shadow: '#ccc05e', isNew: true },
+  { id: 'wordle', name: 'Wordle',    subtitle: 'Library Nook',    icon: ICONS.book(),     color: '#80e8ff', shadow: '#5cb8cc' },
+  { id: 'memory', name: 'Memory',    subtitle: 'Botanical',       icon: ICONS.layers(),   color: '#b388ff', shadow: '#8a66cc' },
+  { id: 'gems',   name: 'Gem Match', subtitle: 'Crystal Cave',    icon: ICONS.diamond(),  color: '#69f0ae', shadow: '#4cc08a' },
+  { id: 'battle', name: 'Battle',    subtitle: 'Enchanted Duel',  icon: ICONS.swords(),   color: '#ff8a65', shadow: '#cc6e50' },
+];
+const GAME_VIEWS = {
+  snake: () => SnakeGame(),
+  match3: () => Match3Game(),
+  wordle: () => WordleGame(),
+  memory: () => MemoryGame(),
+  gems: () => GemMatchGame(),
+  battle: () => BattleGame(),
+};
+function Hub() {
+  const root = document.createElement('div');
+  root.className = 'y2k-lavender-bg hub';
+  root.innerHTML = `
+    <header class="hub-header">
+      <p class="hub-eyebrow">Select your world</p>
+      <h1 class="hub-title">
+        <span style="color:#1a1040">GAME</span>
+        <span style="color:#ff0098">ZONE</span>
+      </h1>
+      <div class="hub-divider">
+        <div class="line"></div>${ICONS.star(14,'#ff0098')}<div class="line"></div>
+      </div>
+    </header>
+    <div class="hub-grid">
+      ${GAMES.map(g => `
+        <button class="y2k-vivid-card" data-id="${g.id}"
+          style="background:${g.color}; box-shadow: 0 6px 0 0 ${g.shadow};">
+          <div class="icon-box">${g.icon}</div>
+          <h3 class="card-name">${g.name}</h3>
+          <p class="card-sub">${g.subtitle}</p>
+          ${g.isNew ? '<span class="y2k-new-badge">NEW</span>' : ''}
+        </button>
+      `).join('')}
+    </div>
+    <footer class="footer"><p>made by hazuri</p></footer>
+  `;
+  root.querySelectorAll('.y2k-vivid-card').forEach(btn => {
+    btn.addEventListener('click', () => render(GAME_VIEWS[btn.dataset.id]));
+  });
+  app.appendChild(root);
+}
+
+/* =========================================================================
+   SHARED — Difficulty selector + Game over modal
+   ========================================================================= */
+function showDifficulty({ easyDesc, mediumDesc, hardDesc, onSelect }) {
+  app.innerHTML = '';
+  const root = document.createElement('div');
+  root.className = 'game-overlay y2k-lavender-bg';
+  root.innerHTML = `
+    <div class="diff-card">
+      <h2 class="diff-title">Pick Your Level</h2>
+      <p class="diff-sub">How brave are you feeling?</p>
+      <button class="diff-btn" data-diff="easy" style="background:#69f0ae; box-shadow:0 5px 0 0 #4cc08a;">
+        <div class="ico">${ICONS.trophy()}</div>
+        <div style="flex:1"><div class="lbl">Easy</div><div class="desc">${easyDesc}</div></div>
+      </button>
+      <button class="diff-btn" data-diff="medium" style="background:#fff176; box-shadow:0 5px 0 0 #ccc05e;">
+        <div class="ico">${ICONS.target()}</div>
+        <div style="flex:1"><div class="lbl">Medium</div><div class="desc">${mediumDesc}</div></div>
+      </button>
+      <button class="diff-btn" data-diff="hard" style="background:#ff6fcf; box-shadow:0 5px 0 0 #cc4fa3;">
+        <div class="ico">${ICONS.flame()}</div>
+        <div style="flex:1"><div class="lbl">Hard</div><div class="desc">${hardDesc}</div></div>
+      </button>
+      <button class="back-btn" id="diff-back">${ICONS.arrow_left()} Back</button>
+    </div>
+  `;
+  root.querySelectorAll('[data-diff]').forEach(b => {
+    b.addEventListener('click', () => onSelect(b.dataset.diff));
+  });
+  root.querySelector('#diff-back').addEventListener('click', closeGame);
+  app.appendChild(root);
+}
+
+function showGameOver({ title, titleColor='#ff0098', message, iconHTML='', playLabel='Play Again',
+  shadowColor='#cc4fa3', playBg='#ff6fcf', playShadow='#cc4fa3', playColor='#fff', onPlayAgain }) {
+  // Append a modal on top — does not erase game underneath
+  const existing = document.getElementById('game-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'game-modal';
+  modal.className = 'modal-bg';
+  modal.innerHTML = `
+    <div class="modal" style="box-shadow: 0 6px 0 0 ${shadowColor};">
+      ${iconHTML ? `<div style="margin-bottom:12px">${iconHTML}</div>` : ''}
+      <h3 style="color:${titleColor}">${title}</h3>
+      <p>${message}</p>
+      <div class="modal-actions">
+        <button class="y2k-btn" id="m-again" style="background:${playBg}; box-shadow:0 4px 0 0 ${playShadow}; color:${playColor};">${playLabel}</button>
+        <button class="y2k-btn" id="m-back" style="background:#80e8ff; box-shadow:0 4px 0 0 #5cb8cc; color:#1a1040;">Back</button>
+      </div>
+    </div>
+  `;
+  modal.querySelector('#m-again').addEventListener('click', () => { modal.remove(); onPlayAgain && onPlayAgain(); });
+  modal.querySelector('#m-back').addEventListener('click', () => { modal.remove(); closeGame(); });
+  app.appendChild(modal);
+}
+
+function gameHeader({ title, badges=[], iconHTML='' }) {
+  return `
+    <div class="game-header">
+      <div class="game-header-left">
+        ${iconHTML}
+        <h2 class="game-title">${title}</h2>
+        ${badges.map(b => `<span class="badge" style="background:${b.bg}; color:${b.color || '#1a1040'};">${b.label}</span>`).join('')}
+      </div>
+      <button class="close-btn" id="game-close">${ICONS.x()}</button>
+    </div>
+  `;
+}
+function bindClose(root) {
+  const c = root.querySelector('#game-close');
+  if (c) c.addEventListener('click', closeGame);
+}
+
+/* =========================================================================
+   SNAKE
+   ========================================================================= */
+function SnakeGame() {
+  const GRID_SIZE = 20, CELL_SIZE = 24, SPEED = 150;
+  const FLOWERS = [
+    {x:3,y:2,r:15},{x:16,y:3,r:-20},{x:2,y:15,r:30},
+    {x:18,y:16,r:-15},{x:8,y:5,r:45},{x:14,y:12,r:-30},
+  ];
+  let snake = [{x:10,y:10}], dir = {x:1,y:0}, food = {x:15,y:15}, score = 0, over = false;
+
+  const root = document.createElement('div');
+  root.className = 'game-overlay';
+  root.style.background = '#e8f5e9';
+  root.innerHTML = `
+    ${FLOWERS.map(f => `<div style="position:absolute; left:${f.x*5}%; top:${f.y*5}%; transform:rotate(${f.r}deg); opacity:0.2; pointer-events:none; color:#ff6fcf;">${ICONS.flower()}</div>`).join('')}
+    <div class="game-card" style="box-shadow: 0 6px 0 0 #4cc08a; max-width: ${GRID_SIZE*CELL_SIZE + 60}px;">
+      ${gameHeader({ title:'Secret Garden', badges:[{ label: `${ICONS.sparkles()} Dewdrops: <span id="snake-score">0</span>`, bg: 'transparent', color: '#9b7abf' }] })}
+      <div class="snake-board" id="snake-board" style="width:${GRID_SIZE*CELL_SIZE}px; height:${GRID_SIZE*CELL_SIZE}px;"></div>
+      <p class="help-text">Arrow Keys or WASD to move</p>
+    </div>
+  `;
+  app.appendChild(root);
+  bindClose(root);
+  const board = root.querySelector('#snake-board');
+  const scoreEl = root.querySelector('#snake-score');
+
+  function generateFood() { food = { x: Math.floor(Math.random()*GRID_SIZE), y: Math.floor(Math.random()*GRID_SIZE) }; }
+
+  function draw() {
+    board.innerHTML = `
+      <div style="position:absolute; inset:0; opacity:0.15;
+        background-image: repeating-linear-gradient(90deg,#2e7d32 0,transparent 1px,transparent ${CELL_SIZE}px),
+                          repeating-linear-gradient(0deg,#2e7d32 0,transparent 1px,transparent ${CELL_SIZE}px);"></div>
+      <div style="position:absolute; left:${food.x*CELL_SIZE+4}px; top:${food.y*CELL_SIZE+4}px;
+        width:${CELL_SIZE-8}px; height:${CELL_SIZE-8}px; border-radius:9999px; background:#ff6fcf; box-shadow:0 0 10px #ff6fcf80;"></div>
+      ${snake.map((s,i) => `
+        <div style="position:absolute; left:${s.x*CELL_SIZE+2}px; top:${s.y*CELL_SIZE+2}px;
+          width:${CELL_SIZE-4}px; height:${CELL_SIZE-4}px; border-radius:9999px;
+          background:${i===0?'#69f0ae':'#a5d6a7'}; border:2px solid #43a047; transition: all 0.075s;">
+          ${i===0?`<div style="position:absolute; width:4px;height:4px;top:4px;left:4px;background:#1a1040;border-radius:9999px;"></div>
+                    <div style="position:absolute; width:4px;height:4px;top:4px;right:4px;background:#1a1040;border-radius:9999px;"></div>`:''}
+        </div>`).join('')}
+      ${over ? `
+        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:rgba(255,255,255,0.9);">
+          <h3 class="bungee" style="color:#ff0098; font-size:24px;">Game Over!</h3>
+          <p style="color:#1a1040;">${score} dewdrops collected</p>
+          <button class="y2k-btn" id="snake-restart" style="background:#69f0ae; box-shadow:0 4px 0 0 #4cc08a; color:#1a1040;">Play Again</button>
+        </div>` : ''}
+    `;
+    if (over) board.querySelector('#snake-restart').addEventListener('click', restart);
+  }
+
+  function restart() { snake=[{x:10,y:10}]; dir={x:1,y:0}; over=false; score=0; scoreEl.textContent='0'; generateFood(); draw(); }
+
+  function tick() {
+    if (over || currentView !== SnakeGame) return;
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (head.x<0||head.x>=GRID_SIZE||head.y<0||head.y>=GRID_SIZE) { over=true; draw(); return; }
+    if (snake.some(s => s.x===head.x && s.y===head.y)) { over=true; draw(); return; }
+    snake = [head, ...snake];
+    if (head.x===food.x && head.y===food.y) { score++; scoreEl.textContent=String(score); generateFood(); }
+    else snake.pop();
+    draw();
+  }
+
+  function onKey(e) {
+    if (over) return;
+    switch (e.key) {
+      case 'ArrowUp': case 'w': if (dir.y===0) dir={x:0,y:-1}; break;
+      case 'ArrowDown': case 's': if (dir.y===0) dir={x:0,y:1}; break;
+      case 'ArrowLeft': case 'a': if (dir.x===0) dir={x:-1,y:0}; break;
+      case 'ArrowRight': case 'd': if (dir.x===0) dir={x:1,y:0}; break;
+    }
+  }
+  window.addEventListener('keydown', onKey);
+  const interval = setInterval(() => {
+    if (currentView !== SnakeGame) { clearInterval(interval); window.removeEventListener('keydown', onKey); return; }
+    tick();
+  }, SPEED);
+  draw();
+}
+
+/* =========================================================================
+   MATCH 3 (drag-to-swap)
+   ========================================================================= */
+function Match3Game() {
+  const GRID_SIZE = 8, TILE_SIZE = 50;
+  const TILE_STYLES = [
+    {bg:'#ff6fcf',shadow:'#cc4fa3',symbol:'✦'},{bg:'#fff176',shadow:'#ccc05e',symbol:'◆'},
+    {bg:'#80e8ff',shadow:'#5cb8cc',symbol:'●'},{bg:'#b388ff',shadow:'#8a66cc',symbol:'★'},
+    {bg:'#69f0ae',shadow:'#4cc08a',symbol:'▲'},{bg:'#ff8a65',shadow:'#cc6e50',symbol:'■'},
+    {bg:'#f48fb1',shadow:'#c2607e',symbol:'◈'},{bg:'#ffab91',shadow:'#cc8a74',symbol:'♦'},
+  ];
+  showDifficulty({
+    easyDesc:'40 moves, 4 tile types', mediumDesc:'30 moves, 6 tile types', hardDesc:'25 moves, 7 tiles, 3min timer',
+    onSelect:(diff) => start(diff),
+  });
+
+  function start(diff) {
+    let moves, tileTypes, timeLimit=null;
+    if (diff==='easy'){moves=40;tileTypes=4;}
+    else if (diff==='medium'){moves=30;tileTypes=6;}
+    else {moves=25;tileTypes=7;timeLimit=180;}
+    let score=0, over=false, dragging=null, target=null, timeRemaining=timeLimit;
+
+    const createTile = (x,y) => ({ id: `${x}-${y}-${Math.random()}`, type: Math.floor(Math.random()*tileTypes), x, y, matched:false });
+    let grid = Array.from({length:GRID_SIZE}, (_,y) => Array.from({length:GRID_SIZE}, (_,x) => createTile(x,y)));
+
+    const root = document.createElement('div');
+    root.className = 'game-overlay';
+    root.style.background = '#fff3e0';
+    root.innerHTML = `
+      <div class="game-card" style="box-shadow:0 6px 0 0 #cc6e50; max-width:${GRID_SIZE*TILE_SIZE+80}px;">
+        <div id="m3-header"></div>
+        <div class="tile-grid" id="m3-grid" style="grid-template-columns: repeat(${GRID_SIZE}, ${TILE_SIZE}px); background:#fce4ec; border:3px solid #f48fb1; width:fit-content;"></div>
+        <p class="help-text">Drag tiles to swap and match 3+</p>
+      </div>
+    `;
+    app.appendChild(root);
+
+    const headerEl = root.querySelector('#m3-header');
+    const gridEl = root.querySelector('#m3-grid');
+
+    function renderHeader() {
+      const badges = [
+        { label:`Score: ${score}`, bg:'#fff176' },
+        { label:`Moves: ${moves}`, bg:'#80e8ff' },
+      ];
+      if (timeRemaining !== null) badges.push({ label: `${Math.floor(timeRemaining/60)}:${String(timeRemaining%60).padStart(2,'0')}`, bg:'#ff6fcf', color:'#fff' });
+      headerEl.innerHTML = gameHeader({ title:'Tile Match', badges });
+      bindClose(root);
+    }
+
+    function renderGrid() {
+      let html = '';
+      grid.forEach(row => row.forEach(t => {
+        const s = TILE_STYLES[t.type];
+        const isDragging = dragging && dragging.x===t.x && dragging.y===t.y;
+        const isTarget = target && target.x===t.x && target.y===t.y;
+        const transform = t.matched ? 'scale(0)' : isDragging ? 'scale(1.15)' : isTarget ? 'scale(1.08)' : 'scale(1)';
+        const border = isDragging ? '3px solid #fff' : isTarget ? '3px solid #1a1040' : '2px solid rgba(255,255,255,0.4)';
+        html += `<div class="tile" data-x="${t.x}" data-y="${t.y}" style="
+          width:${TILE_SIZE}px;height:${TILE_SIZE}px;background:${s.bg};
+          box-shadow:0 3px 0 0 ${s.shadow}; opacity:${t.matched?0:1}; transform:${transform}; border:${border};">
+          <span class="tile-symbol">${s.symbol}</span></div>`;
+      }));
+      gridEl.innerHTML = html;
+    }
+
+    function checkMatches(g) {
+      const matched = new Set();
+      for (let y=0;y<GRID_SIZE;y++) for (let x=0;x<GRID_SIZE-2;x++) {
+        const t = g[y][x].type;
+        if (t===g[y][x+1].type && t===g[y][x+2].type) { matched.add(`${x},${y}`); matched.add(`${x+1},${y}`); matched.add(`${x+2},${y}`); }
+      }
+      for (let x=0;x<GRID_SIZE;x++) for (let y=0;y<GRID_SIZE-2;y++) {
+        const t = g[y][x].type;
+        if (t===g[y+1][x].type && t===g[y+2][x].type) { matched.add(`${x},${y}`); matched.add(`${x},${y+1}`); matched.add(`${x},${y+2}`); }
+      }
+      if (matched.size>0) {
+        matched.forEach(p => { const [x,y]=p.split(',').map(Number); g[y][x].matched=true; });
+        score += matched.size*10;
+        renderHeader(); renderGrid();
+        setTimeout(() => dropTiles(g), 300);
+        return true;
+      }
+      return false;
+    }
+
+    function dropTiles(g) {
+      for (let x=0;x<GRID_SIZE;x++) {
+        let empty = 0;
+        for (let y=GRID_SIZE-1;y>=0;y--) {
+          if (g[y][x].matched) empty++;
+          else if (empty>0) { g[y+empty][x] = {...g[y][x], y:y+empty, matched:false}; g[y][x] = createTile(x,y); }
+        }
+        for (let y=0;y<empty;y++) g[y][x] = createTile(x,y);
+      }
+      renderGrid();
+      setTimeout(() => checkMatches(g), 300);
+    }
+
+    function isAdjacent(a,b) { return (Math.abs(a.x-b.x)===1 && a.y===b.y) || (Math.abs(a.y-b.y)===1 && a.x===b.x); }
+
+    function swap(a,b) {
+      const tmp = grid[a.y][a.x];
+      grid[a.y][a.x] = {...grid[b.y][b.x], x:a.x, y:a.y};
+      grid[b.y][b.x] = {...tmp, x:b.x, y:b.y};
+      moves--; renderHeader(); renderGrid();
+      setTimeout(() => {
+        if (!checkMatches(grid)) {
+          const t = grid[a.y][a.x];
+          grid[a.y][a.x] = {...grid[b.y][b.x], x:a.x, y:a.y};
+          grid[b.y][b.x] = {...t, x:b.x, y:b.y};
+          moves++; renderHeader(); renderGrid();
+        } else if (moves<=0) endGame();
+      }, 500);
+    }
+
+    function endGame() {
+      if (over) return; over = true;
+      showGameOver({ title:'Game Over!', message:`Final Score: ${score}`, onPlayAgain: () => Match3Game() });
+    }
+
+    gridEl.addEventListener('mousedown', (e) => {
+      const t = e.target.closest('.tile'); if (!t || over || moves<=0) return;
+      dragging = { x:+t.dataset.x, y:+t.dataset.y }; renderGrid();
+    });
+    gridEl.addEventListener('mouseover', (e) => {
+      const t = e.target.closest('.tile'); if (!t || !dragging) return;
+      const cand = { x:+t.dataset.x, y:+t.dataset.y };
+      if (isAdjacent(dragging, cand)) { target = cand; renderGrid(); }
+    });
+    function endDrag() {
+      if (dragging && target) swap(dragging, target);
+      dragging = null; target = null; renderGrid();
+    }
+    gridEl.addEventListener('mouseup', endDrag);
+    gridEl.addEventListener('mouseleave', endDrag);
+
+    if (timeLimit) {
+      const t = setInterval(() => {
+        if (currentView !== Match3Game || over) { clearInterval(t); return; }
+        timeRemaining--; renderHeader();
+        if (timeRemaining<=0) { clearInterval(t); endGame(); }
+      }, 1000);
+    }
+
+    renderHeader(); renderGrid();
+  }
+}
+
+/* =========================================================================
+   GEM MATCH (click-to-swap, with combos)
+   ========================================================================= */
+function GemMatchGame() {
+  const GRID_SIZE = 8, TILE_SIZE = 50, GEM_TYPES = 6;
+  const STYLES = [
+    {bg:'#ff6fcf',shadow:'#cc4fa3',symbol:'◆'},{bg:'#b388ff',shadow:'#8a66cc',symbol:'●'},
+    {bg:'#80e8ff',shadow:'#5cb8cc',symbol:'★'},{bg:'#69f0ae',shadow:'#4cc08a',symbol:'▲'},
+    {bg:'#fff176',shadow:'#ccc05e',symbol:'■'},{bg:'#ff8a65',shadow:'#cc6e50',symbol:'♦'},
+  ];
+  let score=0, moves=25, combo=0, selected=null, over=false;
+  const createTile = (x,y) => ({ id:`${x}-${y}-${Math.random()}`, type: Math.floor(Math.random()*GEM_TYPES), x, y, matched:false });
+  let grid = Array.from({length:GRID_SIZE}, (_,y) => Array.from({length:GRID_SIZE}, (_,x) => createTile(x,y)));
+
+  const root = document.createElement('div');
+  root.className = 'game-overlay';
+  root.style.background = '#e8eaf6';
+  root.innerHTML = `
+    <div class="game-card" style="box-shadow:0 6px 0 0 #8a66cc;">
+      <div id="g-header"></div>
+      <div style="border-radius:16px; padding:8px; margin:0 auto; background:#ede7f6; border:3px solid #d1c4e9; width:fit-content;">
+        <div class="tile-grid" id="g-grid" style="grid-template-columns: repeat(${GRID_SIZE}, ${TILE_SIZE}px); padding:0; background:transparent;"></div>
+      </div>
+      <p class="help-text">Click two adjacent gems to swap and match 3+</p>
+    </div>
+  `;
+  app.appendChild(root);
+  const headerEl = root.querySelector('#g-header');
+  const gridEl = root.querySelector('#g-grid');
+
+  function renderHeader() {
+    const badges = [
+      { label: `${ICONS.sparkles()} ${score}`, bg:'#b388ff', color:'#fff' },
+      { label: `Moves: ${moves}`, bg:'#80e8ff' },
+    ];
+    if (combo>1) badges.push({ label:`x${combo}`, bg:'#fff176' });
+    headerEl.innerHTML = gameHeader({ title:'Gem Match', iconHTML:`<span style="color:#b388ff">${ICONS.diamond()}</span>`, badges });
+    bindClose(root);
+  }
+  function renderGrid() {
+    let html = '';
+    grid.forEach(row => row.forEach(t => {
+      const s = STYLES[t.type]; const isSel = selected && selected.x===t.x && selected.y===t.y;
+      const transform = t.matched ? 'scale(0)' : isSel ? 'scale(1.15)' : 'scale(1)';
+      const border = isSel ? '3px solid #1a1040' : '2px solid rgba(255,255,255,0.5)';
+      html += `<button class="tile" data-x="${t.x}" data-y="${t.y}" ${t.matched?'disabled':''} style="
+        width:${TILE_SIZE}px;height:${TILE_SIZE}px;background:${s.bg};
+        box-shadow:0 3px 0 0 ${s.shadow}; opacity:${t.matched?0:1}; transform:${transform}; border:${border};">
+        <span class="tile-symbol" style="font-size:20px;opacity:0.6">${s.symbol}</span></button>`;
+    }));
+    gridEl.innerHTML = html;
+  }
+  function checkMatches(g) {
+    const matched = new Set();
+    for (let y=0;y<GRID_SIZE;y++) for (let x=0;x<GRID_SIZE-2;x++) {
+      const t = g[y][x].type;
+      if (t===g[y][x+1].type && t===g[y][x+2].type) { matched.add(`${x},${y}`); matched.add(`${x+1},${y}`); matched.add(`${x+2},${y}`); }
+    }
+    for (let x=0;x<GRID_SIZE;x++) for (let y=0;y<GRID_SIZE-2;y++) {
+      const t = g[y][x].type;
+      if (t===g[y+1][x].type && t===g[y+2][x].type) { matched.add(`${x},${y}`); matched.add(`${x},${y+1}`); matched.add(`${x},${y+2}`); }
+    }
+    if (matched.size>0) {
+      matched.forEach(p => { const [x,y]=p.split(',').map(Number); g[y][x].matched=true; });
+      combo++; score += matched.size*10*combo; renderHeader(); renderGrid();
+      setTimeout(() => dropTiles(g), 400);
+      return true;
+    } else { combo = 0; renderHeader(); return false; }
+  }
+  function dropTiles(g) {
+    for (let x=0;x<GRID_SIZE;x++) {
+      let empty=0;
+      for (let y=GRID_SIZE-1;y>=0;y--) {
+        if (g[y][x].matched) empty++;
+        else if (empty>0) { g[y+empty][x] = {...g[y][x], y:y+empty, matched:false}; g[y][x] = createTile(x,y); }
+      }
+      for (let y=0;y<empty;y++) g[y][x] = createTile(x,y);
+    }
+    renderGrid();
+    setTimeout(() => checkMatches(g), 300);
+  }
+  function swap(a,b) {
+    const tmp = grid[a.y][a.x];
+    grid[a.y][a.x] = {...grid[b.y][b.x], x:a.x, y:a.y};
+    grid[b.y][b.x] = {...tmp, x:b.x, y:b.y};
+    renderGrid();
+    setTimeout(() => {
+      if (!checkMatches(grid)) {
+        const t = grid[a.y][a.x];
+        grid[a.y][a.x] = {...grid[b.y][b.x], x:a.x, y:a.y};
+        grid[b.y][b.x] = {...t, x:b.x, y:b.y};
+        renderGrid();
+      }
+    }, 100);
+  }
+  gridEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tile'); if (!btn || over) return;
+    const x=+btn.dataset.x, y=+btn.dataset.y;
+    if (!selected) { selected = {x,y}; renderGrid(); return; }
+    const dx = Math.abs(selected.x-x), dy = Math.abs(selected.y-y);
+    if ((dx===1&&dy===0)||(dx===0&&dy===1)) {
+      swap(selected, {x,y});
+      moves--;
+      if (moves<=0) {
+        over = true;
+        showGameOver({ title:'Cave Explored!', titleColor:'#1a1040', message:`Score: ${score}`,
+          iconHTML:`<span style="color:#b388ff">${ICONS.diamond()}</span>`,
+          shadowColor:'#8a66cc', playBg:'#b388ff', playShadow:'#8a66cc', playLabel:'Again',
+          onPlayAgain: () => GemMatchGame() });
+      }
+    }
+    selected = null; renderHeader(); renderGrid();
+  });
+  renderHeader(); renderGrid();
+}
+
+/* =========================================================================
+   WORDLE
+   ========================================================================= */
+function WordleGame() {
+  const WORDS = ['PEACE','BLOOM','DREAM','HEART','LIGHT','MAGIC','GRACE','SWEET','FAIRY','CLOUD','STARS','BLISS','CHARM','FLORA','PEARL','HONEY'];
+  const STATES = {
+    correct:{bg:'#69f0ae',border:'#4cc08a',color:'#1a1040'},
+    present:{bg:'#fff176',border:'#ccc05e',color:'#1a1040'},
+    absent:{bg:'#ccc',border:'#999',color:'#666'},
+    filled:{bg:'#f0d6ff',border:'#d8b4fe',color:'#1a1040'},
+    empty:{bg:'#fff',border:'#e0c4f0',color:'#1a1040'},
+  };
+  const ROWS = [['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','BACK']];
+  const WL = 5, MAX = 6;
+  let target = WORDS[Math.floor(Math.random()*WORDS.length)];
+  let cur = '', guesses = [], tileStates = [], keyStates = {}, over = false, won = false;
+
+  const root = document.createElement('div');
+  root.className = 'game-overlay y2k-lavender-bg';
+  root.innerHTML = `
+    <div class="game-card" style="box-shadow:0 6px 0 0 #d8b4fe; max-width:560px;">
+      <div id="w-header"></div>
+      <div class="wordle-board" id="w-board"></div>
+      <div class="wordle-keyboard" id="w-keyboard"></div>
+      <p class="help-text">Guess the 5-letter word in ${MAX} tries</p>
+    </div>
+  `;
+  app.appendChild(root);
+  const headerEl = root.querySelector('#w-header');
+  const boardEl = root.querySelector('#w-board');
+  const kbdEl = root.querySelector('#w-keyboard');
+  headerEl.innerHTML = gameHeader({ title:'Wordle', iconHTML:`<span style="color:#b388ff">${ICONS.book()}</span>` });
+  bindClose(root);
+
+  function renderBoard() {
+    let html = '';
+    for (let r=0;r<MAX;r++) {
+      html += '<div class="wordle-row">';
+      for (let c=0;c<WL;c++) {
+        const g = guesses[r];
+        const isCur = r === guesses.length;
+        const letter = (g && g[c]) || (isCur ? (cur[c] || '') : '');
+        const state = (tileStates[r] && tileStates[r][c]) || (letter ? 'filled' : 'empty');
+        const s = STATES[state];
+        html += `<div class="wordle-tile" style="background:${s.bg}; border:3px solid ${s.border}; color:${s.color};
+          box-shadow:${letter?`0 3px 0 0 ${s.border}`:'none'}; transform:${letter?'scale(1.02)':'scale(1)'};">${letter}</div>`;
+      }
+      html += '</div>';
+    }
+    boardEl.innerHTML = html;
+  }
+  function renderKeyboard() {
+    kbdEl.innerHTML = ROWS.map(row => `<div class="wordle-keyrow">${row.map(k => {
+      const s = STATES[keyStates[k] || 'empty']; const wide = k.length>1;
+      return `<button class="wordle-key ${wide?'wide':''}" data-k="${k}" style="background:${s.bg};border:2px solid ${s.border};color:${s.color};box-shadow:0 3px 0 0 ${s.border};">${k==='BACK'?'←':k}</button>`;
+    }).join('')}</div>`).join('');
+    kbdEl.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => handleKey(b.dataset.k)));
+  }
+  function submit() {
+    if (cur.length !== WL || over) return;
+    guesses.push(cur);
+    const tState = []; const targetLetters = target.split(''); const guess = cur.split('');
+    guess.forEach((l,i) => { if (l===targetLetters[i]) { tState[i]='correct'; keyStates[l]='correct'; targetLetters[i]=''; } });
+    guess.forEach((l,i) => {
+      if (tState[i]!=='correct') {
+        const idx = targetLetters.indexOf(l);
+        if (idx!==-1) { tState[i]='present'; if (keyStates[l]!=='correct') keyStates[l]='present'; targetLetters[idx]=''; }
+        else { tState[i]='absent'; if (!keyStates[l]) keyStates[l]='absent'; }
+      }
+    });
+    tileStates.push(tState);
+    if (cur===target) { won=true; over=true; }
+    else if (guesses.length>=MAX) over=true;
+    cur = ''; renderBoard(); renderKeyboard();
+    if (over) {
+      showGameOver({
+        title: won ? 'You Got It!' : 'Nice Try!',
+        titleColor: won ? '#69f0ae' : '#ff0098',
+        message: won ? `Solved in ${guesses.length} ${guesses.length===1?'try':'tries'}` : `The word was: ${target}`,
+        playLabel:'New Word', shadowColor:'#d8b4fe', playBg:'#b388ff', playShadow:'#8a66cc', playColor:'#fff',
+        onPlayAgain: () => WordleGame(),
+      });
+    }
+  }
+  function handleKey(k) {
+    if (over) return;
+    if (k==='ENTER') submit();
+    else if (k==='BACK') { cur = cur.slice(0,-1); renderBoard(); }
+    else if (cur.length<WL) { cur += k; renderBoard(); }
+  }
+  function onKeyDown(e) {
+    if (over || currentView !== WordleGame) return;
+    if (e.key==='Enter') submit();
+    else if (e.key==='Backspace') { cur = cur.slice(0,-1); renderBoard(); }
+    else if (/^[a-zA-Z]$/.test(e.key) && cur.length<WL) { cur += e.key.toUpperCase(); renderBoard(); }
+  }
+  window.addEventListener('keydown', onKeyDown);
+  renderBoard(); renderKeyboard();
+}
+
+/* =========================================================================
+   MEMORY
+   ========================================================================= */
+function MemoryGame() {
+  const TYPES = [
+    {ico:ICONS.flower(), color:'#ff6fcf'},{ico:ICONS.sparkles(), color:'#b388ff'},
+    {ico:ICONS.leaf(28), color:'#69f0ae'},{ico:ICONS.moon(), color:'#80e8ff'},
+    {ico:ICONS.sun(), color:'#fff176'},{ico:ICONS.gem(), color:'#ff8a65'},
+    {ico:ICONS.heart(), color:'#ff0098'},{ico:ICONS.star(28,'#f48fb1'), color:'#f48fb1'},
+  ];
+  showDifficulty({
+    easyDesc:'8 cards (4 pairs)', mediumDesc:'12 cards (6 pairs)', hardDesc:'16 cards (8 pairs), faster',
+    onSelect:(diff) => start(diff),
+  });
+
+  function shuffle(a) { const r = a.slice(); for (let i=r.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; } return r; }
+
+  function start(diff) {
+    let pairs, flipDelay;
+    if (diff==='easy'){pairs=4;flipDelay=1200;} else if (diff==='medium'){pairs=6;flipDelay=1000;} else {pairs=8;flipDelay=700;}
+    let cards = shuffle(TYPES.slice(0,pairs).flatMap((_,i) => [
+      {id:i*2, type:i, flipped:false, matched:false},
+      {id:i*2+1, type:i, flipped:false, matched:false},
+    ]));
+    let flipped=[], moves=0, matches=0;
+
+    const root = document.createElement('div');
+    root.className = 'game-overlay y2k-lavender-bg';
+    root.innerHTML = `
+      <div class="game-card" style="box-shadow:0 6px 0 0 #cc4fa3;">
+        <div id="mem-header"></div>
+        <div class="memory-grid" id="mem-grid"></div>
+        <p class="help-text">Find all matching pairs</p>
+      </div>
+    `;
+    app.appendChild(root);
+    const headerEl = root.querySelector('#mem-header');
+    const gridEl = root.querySelector('#mem-grid');
+
+    function renderHeader() {
+      headerEl.innerHTML = gameHeader({ title:'Memory', badges:[
+        { label:`Moves: ${moves}`, bg:'#fff176' },
+        { label:`Pairs: ${matches}/${pairs}`, bg:'#69f0ae' },
+      ]});
+      bindClose(root);
+    }
+    function renderGrid() {
+      gridEl.innerHTML = cards.map((c,i) => {
+        const t = TYPES[c.type];
+        const revealed = c.flipped || c.matched;
+        const bg = revealed ? '#fff' : '#ff6fcf';
+        const border = `3px solid ${revealed ? t.color : '#cc4fa3'}`;
+        const shadow = `0 4px 0 0 ${revealed ? t.color : '#cc4fa3'}`;
+        const transform = c.matched ? 'scale(0.9)' : revealed ? 'scale(1.02)' : 'scale(1)';
+        const inner = revealed ? `<span style="color:${t.color}">${t.ico}</span>` : `<span style="color:#fff;opacity:0.4">${ICONS.star(20,'#fff')}</span>`;
+        return `<button class="memory-card" data-i="${i}" ${c.matched?'disabled':''} style="
+          background:${bg}; border:${border}; box-shadow:${shadow}; opacity:${c.matched?0.5:1}; transform:${transform};
+          cursor:${c.matched?'default':'pointer'};">${inner}</button>`;
+      }).join('');
+      gridEl.querySelectorAll('[data-i]').forEach(b => b.addEventListener('click', () => onClick(+b.dataset.i)));
+    }
+    function onClick(i) {
+      if (flipped.length===2 || flipped.includes(i) || cards[i].matched) return;
+      cards[i].flipped = true; flipped.push(i); renderGrid();
+      if (flipped.length===2) {
+        moves++; renderHeader();
+        const [a,b] = flipped;
+        if (cards[a].type === cards[b].type) {
+          setTimeout(() => {
+            cards[a].matched = true; cards[b].matched = true; flipped = []; matches++;
+            renderHeader(); renderGrid();
+            if (matches===pairs) setTimeout(() => {
+              showGameOver({ title:'Complete!', message:`Finished in ${moves} moves`,
+                iconHTML:`<span style="color:#ff0098">${ICONS.sparkles()}</span>`,
+                shadowColor:'#cc4fa3', onPlayAgain: () => MemoryGame() });
+            }, 400);
+          }, 600);
+        } else {
+          setTimeout(() => { cards[a].flipped=false; cards[b].flipped=false; flipped=[]; renderGrid(); }, flipDelay);
+        }
+      }
+    }
+    renderHeader(); renderGrid();
+  }
+}
+
+/* =========================================================================
+   BATTLE
+   ========================================================================= */
+function BattleGame() {
+  const ELEMENTS = {
+    nature: { ico: ICONS.leaf(24), color:'#69f0ae', shadow:'#4cc08a', name:'Nature' },
+    water:  { ico: ICONS.droplet(24), color:'#80e8ff', shadow:'#5cb8cc', name:'Water' },
+    fire:   { ico: ICONS.flame(), color:'#ff8a65', shadow:'#cc6e50', name:'Fire' },
+  };
+  showDifficulty({
+    easyDesc:'120 HP vs 80 HP', mediumDesc:'100 HP vs 100 HP', hardDesc:'80 HP vs 120 HP, smarter AI',
+    onSelect:(diff) => pickElement(diff),
+  });
+
+  function pickElement(diff) {
+    let maxP, maxO;
+    if (diff==='easy'){maxP=120;maxO=80;} else if (diff==='medium'){maxP=100;maxO=100;} else {maxP=80;maxO=120;}
+    const root = document.createElement('div');
+    root.className = 'game-overlay y2k-lavender-bg';
+    root.innerHTML = `
+      <div class="diff-card" style="box-shadow:0 6px 0 0 #cc6e50;">
+        <h2 class="bungee" style="color:#1a1040; font-size:24px; text-align:center; margin-bottom:8px;">Choose Element</h2>
+        <p class="diff-sub">Pick your fighting style</p>
+        ${Object.entries(ELEMENTS).map(([k,el]) => `
+          <button class="diff-btn" data-el="${k}" style="background:${el.color}; box-shadow:0 5px 0 0 ${el.shadow};">
+            <div class="ico">${el.ico}</div>
+            <span class="lbl">${el.name}</span>
+          </button>`).join('')}
+      </div>
+    `;
+    app.appendChild(root);
+    root.querySelectorAll('[data-el]').forEach(b => b.addEventListener('click', () => start(diff, maxP, maxO, b.dataset.el)));
+  }
+
+  function start(diff, maxP, maxO, playerEl) {
+    const opponentEl = ['nature','water','fire'][Math.floor(Math.random()*3)];
+    let pHP=maxP, oHP=maxO, pDef=false, oDef=false, cd=0, isPlayerTurn=true, over=false;
+    let message = `You chose ${ELEMENTS[playerEl].name}! Opponent chose ${ELEMENTS[opponentEl].name}!`;
+    let log = [message];
+    let animP=false, animO=false, shake=false, dmgNum=null;
+
+    const root = document.createElement('div');
+    root.className = 'game-overlay y2k-lavender-bg';
+    root.innerHTML = `
+      <div id="b-shell" style="position:relative; z-index:10; width:100%; max-width:900px;">
+        <button class="close-btn" id="b-close" style="position:absolute; top:16px; right:16px; z-index:50;">${ICONS.x()}</button>
+        <div class="game-card battle-card" style="box-shadow:0 6px 0 0 #cc6e50;">
+          <h2 class="bungee" style="color:#1a1040; font-size:24px; text-align:center; margin-bottom:16px;">Battle</h2>
+          <div id="b-content"></div>
+        </div>
+      </div>
+    `;
+    app.appendChild(root);
+    root.querySelector('#b-close').addEventListener('click', closeGame);
+    const content = root.querySelector('#b-content');
+    const shell = root.querySelector('#b-shell');
+
+    function expr(hp, max) { const p = (hp/max)*100; return p>70?'^_^':p>30?'o_o':'x_x'; }
+    function hpColor(hp, max) { const p=(hp/max)*100; return p>70?'#69f0ae':p>40?'#fff176':p>20?'#ff8a65':'#ff6fcf'; }
+    function elAdv(a,d) {
+      if ((a==='nature'&&d==='water')||(a==='water'&&d==='fire')||(a==='fire'&&d==='nature')) return 10;
+      if ((a==='water'&&d==='nature')||(a==='fire'&&d==='water')||(a==='nature'&&d==='fire')) return -5;
+      return 0;
+    }
+
+    function renderCombatant(label, hp, max, el, animating, defending, animClass, badgePos) {
+      return `
+        <div class="combatant">
+          <div class="combatant-circle">
+            <div class="combatant-face ${animating?animClass:''}" style="background:${ELEMENTS[el].color}; box-shadow:0 5px 0 0 ${ELEMENTS[el].shadow}; ${defending?'box-shadow:0 5px 0 0 '+ELEMENTS[el].shadow+', 0 0 0 4px #80e8ff;':''}">${expr(hp,max)}</div>
+            <div style="position:absolute; top:-4px; ${badgePos}; padding:6px; border-radius:9999px; background:${ELEMENTS[el].color}; border:2px solid #fff;">${ELEMENTS[el].ico}</div>
+            ${defending?`<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.4; color:#80e8ff;">${ICONS.shield(64)}</div>`:''}
+          </div>
+          <div class="hp-bar-wrap">
+            <div class="hp-labels"><span>${label}</span><span>${hp}/${max}</span></div>
+            <div class="hp-bar"><div class="hp-fill" style="width:${(hp/max)*100}%; background:${hpColor(hp,max)};"></div></div>
+          </div>
+        </div>`;
+    }
+
+    function render() {
+      shell.classList.toggle('animate-shake', shake);
+      const actions = isPlayerTurn && !over ? `
+        <div class="battle-actions">
+          ${[
+            { a:'quick', ico:ICONS.sword(), label:'Quick', desc:'10-16', bg:'#ff6fcf', shadow:'#cc4fa3' },
+            { a:'power', ico:ICONS.sword(), label:'Power', desc:'20-31', bg:'#ff8a65', shadow:'#cc6e50' },
+            { a:'defend', ico:ICONS.shield(20), label:'Defend', desc:'+5 HP', bg:'#80e8ff', shadow:'#5cb8cc' },
+            { a:'special', ico:ICONS.star20(), label:'Special', desc:'35-46', bg:'#fff176', shadow:'#ccc05e' },
+          ].map(o => {
+            const disabled = o.a==='special' && cd>0;
+            const inner = disabled
+              ? `${ICONS.zap()}<span class="lbl">CD: ${cd}</span>`
+              : `${o.ico}<span class="lbl">${o.label}</span><span class="desc">${o.desc}</span>`;
+            return `<button class="battle-action" data-a="${o.a}" ${disabled?'disabled':''}
+              style="background:${o.bg}; box-shadow:0 4px 0 0 ${o.shadow};">${inner}</button>`;
+          }).join('')}
+        </div>` : '';
+      const turn = !over ? `<p class="turn-indicator" style="color:${isPlayerTurn?'#ff0098':'#9b7abf'};">${isPlayerTurn?'YOUR TURN!':"Opponent's turn..."}</p>` : '';
+
+      content.innerHTML = `
+        <div class="combatants">
+          ${renderCombatant('YOU', pHP, maxP, playerEl, animP, pDef, 'animate-attack-forward', 'right:-4px')}
+          <div class="vs-text">VS</div>
+          ${renderCombatant('FOE', oHP, maxO, opponentEl, animO, oDef, 'animate-attack-backward', 'left:-4px')}
+        </div>
+        ${dmgNum ? `<div class="bungee animate-damage-float" style="position:absolute; top:33%; ${dmgNum.x>0?'right:25%':'left:25%'}; font-size:48px; color:#ff0098; z-index:50;">-${dmgNum.value}</div>` : ''}
+        <div class="battle-message">${message}</div>
+        ${actions}
+        ${turn}
+        <div class="battle-log">
+          <h4>Battle Log</h4>
+          ${log.slice(-5).map(l => `<p>${l}</p>`).join('')}
+        </div>
+      `;
+      content.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => playerAction(b.dataset.a)));
+    }
+
+    function showDmgNum(v, isOpp) { dmgNum = { value:v, x: isOpp?-100:100 }; render(); setTimeout(() => { dmgNum=null; render(); }, 1000); }
+
+    function dealDamage(base, range, mult, attackerEl, defenderEl, isPlayer, defending, label, dur) {
+      let dmg = Math.floor((base + Math.floor(Math.random()*range))*mult) + elAdv(attackerEl, defenderEl);
+      if (isPlayer) { animP=true; setTimeout(() => { animP=false; render(); }, dur); }
+      else { animO=true; setTimeout(() => { animO=false; render(); }, dur); }
+      shake=true; setTimeout(() => { shake=false; render(); }, dur);
+      if (defending) { dmg = Math.floor(dmg*0.4); message = `${label} blocked! ${dmg} dmg`; }
+      else { message = `${label}! ${dmg} dmg`; }
+      showDmgNum(dmg, !isPlayer);
+      if (isPlayer) { oHP = Math.max(0, oHP - dmg); log.push(`You dealt ${dmg} (${label})`); }
+      else { pHP = Math.max(0, pHP - dmg); log.push(`Opponent dealt ${dmg}`); }
+      checkOver();
+      return dmg;
+    }
+    function checkOver() {
+      if (over) return;
+      if (pHP<=0) { over=true; message="Defeated... but you fought well!"; setTimeout(end, 600); }
+      else if (oHP<=0) { over=true; message="Victory! You win!"; setTimeout(end, 600); }
+    }
+    function end() {
+      const won = oHP<=0;
+      showGameOver({
+        title: won ? 'VICTORY!' : 'DEFEATED',
+        titleColor: won ? '#69f0ae' : '#ff0098',
+        message,
+        iconHTML: `<span style="color:${won?'#fff176':'#b388ff'}">${ICONS.star(56, won?'#fff176':'#b388ff')}</span>`,
+        playLabel:'Again', shadowColor:'#cc4fa3', onPlayAgain: () => BattleGame(),
+      });
+    }
+    function playerAction(action) {
+      if (!isPlayerTurn || over) return;
+      isPlayerTurn = false;
+      const mult = diff==='easy'?1 : diff==='hard'?1.2 : 1;
+      let dmg = 0;
+      if (action==='quick') dmg = dealDamage(10,6,mult,playerEl,opponentEl,true,oDef,'Quick',500);
+      else if (action==='power') {
+        if (Math.random()>0.2) dmg = dealDamage(20,11,mult,playerEl,opponentEl,true,oDef,'Power',600);
+        else { message="Power attack missed!"; log.push("Power missed!"); }
+      } else if (action==='defend') {
+        pDef=true; pHP = Math.min(maxP, pHP+5); message="Defending! +5 HP"; log.push("You defend +5 HP");
+      } else if (action==='special') {
+        if (cd>0) { isPlayerTurn=true; return; }
+        cd=3; dmg = dealDamage(35,11,mult,playerEl,opponentEl,true,oDef,'SPECIAL',700);
+      }
+      render();
+      setTimeout(() => { if (!over) opponentTurn(); }, 2000);
+    }
+    function opponentTurn() {
+      pDef=false;
+      if (cd>0) cd--;
+      let act;
+      if (diff==='hard') {
+        if (oHP < maxO*0.3) act = Math.random()<0.7 ? 'defend' : 'special';
+        else if (pDef) act = Math.random()<0.8 ? 'power' : 'special';
+        else act = ['quick','quick','power','special','defend'][Math.floor(Math.random()*5)];
+      } else {
+        if (oHP < maxO*0.3) act = Math.random()<0.5 ? 'defend' : 'quick';
+        else act = ['quick','power','defend','special'][Math.floor(Math.random()*4)];
+      }
+      const mult = diff==='hard'?1.2 : diff==='easy'?0.8 : 1;
+      if (act==='quick') dealDamage(10,6,mult,opponentEl,playerEl,false,pDef,'Hit',500);
+      else if (act==='power') {
+        if (Math.random()>0.2) dealDamage(20,11,mult,opponentEl,playerEl,false,pDef,'Power hit',600);
+        else { message="Opponent missed!"; log.push("Opponent missed!"); }
+      } else if (act==='defend') { oDef=true; oHP = Math.min(maxO, oHP+5); message="Opponent defends +5 HP"; log.push("Opponent defends"); }
+      else if (act==='special') dealDamage(35,11,mult,opponentEl,playerEl,false,pDef,'SPECIAL',700);
+      render();
+      setTimeout(() => { oDef=false; isPlayerTurn=true; if (!over) message="Your turn!"; render(); }, 2000);
+    }
+
+    render();
+  }
+}
+
+/* ---------- Boot ---------- */
+render(Hub);
+</script>
+</body>
+</html>
