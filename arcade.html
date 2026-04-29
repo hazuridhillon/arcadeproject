@@ -236,12 +236,12 @@ const GAMES = [
   { id: 'battle', name: 'Battle',    subtitle: 'Enchanted Duel',  icon: ICONS.swords(),   color: '#ff8a65', shadow: '#cc6e50' },
 ];
 const GAME_VIEWS = {
-  snake: () => SnakeGame(),
-  match3: () => Match3Game(),
-  wordle: () => WordleGame(),
-  memory: () => MemoryGame(),
-  gems: () => GemMatchGame(),
-  battle: () => BattleGame(),
+  snake: SnakeGame,
+  match3: Match3Game,
+  wordle: WordleGame,
+  memory: MemoryGame,
+  gems: GemMatchGame,
+  battle: BattleGame,
 };
 function Hub() {
   const root = document.createElement('div');
@@ -450,6 +450,7 @@ function Match3Game() {
   });
 
   function start(diff) {
+    app.innerHTML = '';
     let moves, tileTypes, timeLimit=null;
     if (diff==='easy'){moves=40;tileTypes=4;}
     else if (diff==='medium'){moves=30;tileTypes=6;}
@@ -774,6 +775,7 @@ function WordleGame() {
     else if (guesses.length>=MAX) over=true;
     cur = ''; renderBoard(); renderKeyboard();
     if (over) {
+      window.removeEventListener('keydown', onKeyDown);
       showGameOver({
         title: won ? 'You Got It!' : 'Nice Try!',
         titleColor: won ? '#69f0ae' : '#ff0098',
@@ -817,6 +819,7 @@ function MemoryGame() {
   function shuffle(a) { const r = a.slice(); for (let i=r.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; } return r; }
 
   function start(diff) {
+    app.innerHTML = '';
     let pairs, flipDelay;
     if (diff==='easy'){pairs=4;flipDelay=1200;} else if (diff==='medium'){pairs=6;flipDelay=1000;} else {pairs=8;flipDelay=700;}
     let cards = shuffle(TYPES.slice(0,pairs).flatMap((_,i) => [
@@ -900,6 +903,7 @@ function BattleGame() {
   });
 
   function pickElement(diff) {
+    app.innerHTML = '';
     let maxP, maxO;
     if (diff==='easy'){maxP=120;maxO=80;} else if (diff==='medium'){maxP=100;maxO=100;} else {maxP=80;maxO=120;}
     const root = document.createElement('div');
@@ -920,6 +924,7 @@ function BattleGame() {
   }
 
   function start(diff, maxP, maxO, playerEl) {
+    app.innerHTML = '';
     const opponentEl = ['nature','water','fire'][Math.floor(Math.random()*3)];
     let pHP=maxP, oHP=maxO, pDef=false, oDef=false, cd=0, isPlayerTurn=true, over=false;
     let message = `You chose ${ELEMENTS[playerEl].name}! Opponent chose ${ELEMENTS[opponentEl].name}!`;
